@@ -1,0 +1,65 @@
+-- Constants
+local AUTO_PARRY_DISTANCE = 10 -- Adjust as needed
+local PARRY_COOLDOWN = 2 -- Adjust as needed
+
+-- Get references to necessary objects
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- Create GUI
+local gui = Instance.new("ScreenGui")
+gui.Parent = player.PlayerGui
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 200, 0, 50)
+frame.Position = UDim2.new(0.5, -100, 0.8, 0)
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+frame.BackgroundTransparency = 0.5
+frame.Parent = gui
+
+local label = Instance.new("TextLabel")
+label.Size = UDim2.new(1, 0, 1, 0)
+label.TextScaled = true
+label.TextColor3 = Color3.fromRGB(255, 255, 255)
+label.Font = Enum.Font.SourceSansBold
+label.Text = "Auto Parry: OFF"
+label.Parent = frame
+
+-- Function to toggle auto parry
+local autoParryEnabled = false
+local function toggleAutoParry()
+    autoParryEnabled = not autoParryEnabled
+    if autoParryEnabled then
+        label.Text = "Auto Parry: ON"
+    else
+        label.Text = "Auto Parry: OFF"
+    end
+end
+
+-- Function to check for nearby enemies and trigger auto parry
+local function autoParry()
+    if autoParryEnabled and humanoid.Health > 0 then
+        local nearbyEnemies = {} -- Table to store nearby enemies
+        for _, enemy in ipairs(game.Players:GetPlayers()) do
+            if enemy ~= player then -- Exclude the player themselves
+                local enemyCharacter = enemy.Character
+                if enemyCharacter and (character.Position - enemyCharacter.Position).magnitude <= AUTO_PARRY_DISTANCE then
+                    table.insert(nearbyEnemies, enemyCharacter)
+                end
+            end
+        end
+        if #nearbyEnemies > 0 then
+            -- Perform parry action here (e.g., trigger animation)
+            humanoid:LoadAnimation(game.ReplicatedStorage.ParryAnimations.ParryAnimation):Play()
+            -- You can add more actions here such as damaging nearby enemies
+            wait(PARRY_COOLDOWN)
+        end
+    end
+end
+
+-- Connect auto parry function to a loop (e.g., a RunService loop)
+game:GetService("RunService").Heartbeat:Connect(autoParry)
+
+-- Connect toggle function to GUI click
+frame.MouseButton1Click:Connect(toggleAutoParry)
